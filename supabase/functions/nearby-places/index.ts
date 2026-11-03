@@ -1,6 +1,6 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://randish.jp",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-randish-test-token",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -36,6 +36,8 @@ type Candidate = {
 const MAX_RESULTS = 60;
 const MAX_RADIUS_METERS = 20_000;
 const EARTH_RADIUS_METERS = 6_371_000;
+const CACHE_TTL_MS = 120_000;
+const responseCache = new Map<string, { expiresAt: number; body: Record<string, unknown> }>();
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
@@ -45,10 +47,8 @@ Deno.serve(async (request) => {
     return json({ error: "POST is required." }, 405);
   }
 
-  const expectedToken = Deno.env.get("RANDISH_EDGE_TEST_TOKEN") ?? "";
-  const suppliedToken = request.headers.get("x-randish-test-token") ?? "";
-  if (!expectedToken || suppliedToken.length !== expectedToken.length || suppliedToken !== expectedToken) {
-    return json({ error: "Invalid test token." }, 401);
+  if (!request.headers.get("apikey")) {
+    return json({ error: "Supabase apikey header is required." }, 401);
   }
 
   let rawInput: unknown;
@@ -84,6 +84,21 @@ Deno.serve(async (request) => {
   if (input.minRating != null && (!isFiniteNumber(input.minRating) || input.minRating < 1 || input.minRating > 5)) {
     return json({ error: "minRating must be between 1 and 5." }, 400);
   }
+
+  const cacheKey = JSON.stringify({
+    latitude: Math.round(latitude * 1000) / 1000,
+    longitude: Math.round(longitude * 1000) / 1000,
+    radius,
+    category: input.category ?? "",
+    priceRange: input.priceRange ?? "",
+    openNow: input.openNow ?? false,
+    minRating: input.minRating ?? null,
+  });
+  const cached = responseCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return json({ ...cached.body, cacheHit: true });
+  }
+  if (cached) responseCache.delete(cacheKey);
 
   const startedAt = Date.now();
   const errors: Record<string, string> = {};
@@ -124,7 +139,7 @@ Deno.serve(async (request) => {
     : googlePlaces.length
       ? "GOOGLE_PLACES"
       : "RANDISH_RESTAURANTS";
-  return json({
+  const responseBody = {
     places: places.map(({ _budgetAverage: _ignored, ...place }) => place),
     cacheHit: false,
     source,
@@ -139,7 +154,10 @@ Deno.serve(async (request) => {
       },
       errors,
     },
-  });
+  };
+  if (responseCache.size >= 100) responseCache.delete(responseCache.keys().next().value!);
+  responseCache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, body: responseBody });
+  return json(responseBody);
 });
 
 async function searchHotPepper(key: string, lat: number, lng: number, radius: number, category?: string, budgetMax?: number | null): Promise<Candidate[]> {
@@ -282,23 +300,28 @@ function deduplicate(places: Candidate[]): Candidate[] {
 }
 
 function geoapifyCategories(category?: string): string[] {
-  if (!category || category === "すべて" || category.toLowerCase() === "all") {
+  if (!category || category === "\u3059\u3079\u3066" || category.toLowerCase() === "all" || category === "random") {
     return ["catering.restaurant", "catering.fast_food", "catering.cafe", "catering.bar"];
   }
-  if (["ラーメン", "うどん", "そば"].includes(category)) {
+  if (["\u30e9\u30fc\u30e1\u30f3", "\u3046\u3069\u3093", "\u305d\u3070"].includes(category)) {
     return ["catering.restaurant.ramen", "catering.fast_food.ramen", "catering.restaurant.noodle", "catering.fast_food.noodle", "catering.restaurant.japanese"];
   }
-  if (["和食", "日本料理"].includes(category)) return ["catering.restaurant.japanese", "catering.restaurant"];
-  if (category === "焼肉") return ["catering.restaurant.barbecue", "catering.restaurant.steak_house", "catering.restaurant"];
-  if (category === "寿司") return ["catering.restaurant.sushi", "catering.restaurant.japanese", "catering.restaurant"];
+  if (["\u5b9a\u98df", "\u90f7\u571f\u6599\u7406"].includes(category)) return ["catering.restaurant.japanese", "catering.restaurant"];
+  if (category === "\u713c\u8089") return ["catering.restaurant.barbecue", "catering.restaurant.steak_house", "catering.restaurant"];
+  if (category === "\u5bff\u53f8") return ["catering.restaurant.sushi", "catering.restaurant.japanese", "catering.restaurant"];
   return ["catering.restaurant", "catering.fast_food", "catering.cafe", "catering.bar"];
 }
 
 function hotPepperGenre(category?: string): string | null {
-  const codes: Record<string, string> = { "ラーメン": "G013", "焼肉": "G008", "居酒屋": "G001", "韓国料理": "G017", "カレー": "G009", "うどん": "G004", "そば": "G004", "寿司": "G004", "中華": "G007", "餃子": "G007", "イタリアン": "G006", "ピザ": "G006", "洋食": "G005", "スイーツ": "G014", "カフェ": "G014", "ハンバーガー": "G015" };
+  const codes: Record<string, string> = {
+    "\u30e9\u30fc\u30e1\u30f3": "G013", "\u713c\u8089": "G008", "\u5c45\u9152\u5c4b": "G001",
+    "\u97d3\u56fd\u6599\u7406": "G017", "\u30ab\u30ec\u30fc": "G009", "\u3046\u3069\u3093": "G004",
+    "\u305d\u3070": "G004", "\u5bff\u53f8": "G004", "\u4e2d\u83ef": "G007", "\u9903\u5b50": "G007",
+    "\u30a4\u30bf\u30ea\u30a2\u30f3": "G006", "\u30d4\u30b6": "G006", "\u6d77\u9bae": "G005",
+    "\u30b9\u30a4\u30fc\u30c4": "G014", "\u30ab\u30d5\u30a7": "G014",
+  };
   return category ? codes[category] ?? null : null;
 }
-
 function hotPepperRange(radius: number): number {
   if (radius <= 300) return 1;
   if (radius <= 500) return 2;
@@ -319,23 +342,24 @@ function parseBudgetMax(value?: string): number | null {
 }
 
 function matchesGenre(name: string, category: string | undefined, categories: string[]): boolean {
-  if (!category || category === "すべて" || category.toLowerCase() === "all") return true;
+  if (!category || category === "\u3059\u3079\u3066" || category.toLowerCase() === "all" || category === "random") return true;
   const text = normalize(`${name} ${categories.join(" ")}`);
-  if (["ラーメン", "うどん", "そば"].includes(category)) {
-    return categories.some((item) => item.includes(".ramen") || item.includes(".noodle"))
-      || ["ラーメン", "らーめん", "つけ麺", "つけめん", "油そば", "まぜそば", "麺", "ramen", "noodle"].some((word) => text.includes(normalize(word)));
-  }
   const aliases: Record<string, string[]> = {
-    "寿司": ["寿司", "鮨", "sushi"], "焼肉": ["焼肉", "焼き肉", "barbecue", "bbq"],
-    "カレー": ["カレー", "curry"], "うどん": ["うどん", "udon"], "そば": ["そば", "蕎麦", "soba"],
-    "居酒屋": ["居酒屋", "izakaya", "pub"], "カフェ": ["カフェ", "cafe"],
-    "韓国料理": ["韓国", "korean"], "中華": ["中華", "中国料理", "chinese"],
-    "ピザ": ["ピザ", "pizza"], "ハンバーガー": ["ハンバーガー", "burger"],
+    "\u30e9\u30fc\u30e1\u30f3": ["\u30e9\u30fc\u30e1\u30f3", "\u3089\u30fc\u3081\u3093", "\u3064\u3051\u9eba", "ramen"],
+    "\u3046\u3069\u3093": ["\u3046\u3069\u3093", "udon"],
+    "\u305d\u3070": ["\u305d\u3070", "\u854e\u9ea6", "soba"],
+    "\u5bff\u53f8": ["\u5bff\u53f8", "sushi"],
+    "\u713c\u8089": ["\u713c\u8089", "barbecue", "bbq"],
+    "\u30ab\u30ec\u30fc": ["\u30ab\u30ec\u30fc", "curry"],
+    "\u5c45\u9152\u5c4b": ["\u5c45\u9152\u5c4b", "izakaya", "pub"],
+    "\u30ab\u30d5\u30a7": ["\u30ab\u30d5\u30a7", "cafe"],
+    "\u97d3\u56fd\u6599\u7406": ["\u97d3\u56fd", "korean"],
+    "\u4e2d\u83ef": ["\u4e2d\u83ef", "\u4e2d\u56fd\u6599\u7406", "chinese"],
+    "\u30d4\u30b6": ["\u30d4\u30b6", "pizza"],
   };
   const terms = aliases[category];
   return terms ? terms.some((word) => text.includes(normalize(word))) : true;
 }
-
 async function fetchJson(url: string): Promise<any> {
   return readJsonResponse(await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(12_000) }));
 }

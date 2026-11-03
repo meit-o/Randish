@@ -393,6 +393,15 @@ const REQUEST_TIMEOUT_MS = 30000;
 const REQUEST_TOTAL_TIMEOUT_MS = 75000;
 const MAGIC_LINK_REQUEST_TIMEOUT_MS = 75000;
 const MIN_REQUEST_TIMEOUT_MS = 1200;
+const SUPABASE_FUNCTION_TIMEOUT_MS = 12000;
+
+const getNearbyPlacesFunctionConfig = () => {
+  const projectUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(/\/+$/, '');
+  const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  return projectUrl && publishableKey
+    ? { url: `${projectUrl}/functions/v1/nearby-places`, publishableKey }
+    : null;
+};
 
 export class RandishApiError extends Error {
   constructor(
@@ -667,11 +676,30 @@ export const randishApi = {
   getAreaCenter: (baseUrl: ApiBaseUrlInput, area: string) =>
     request<AreaCenter | null>(baseUrl, 'api/places/area-center', { area }),
 
-  getNearbyPlaces: (baseUrl: ApiBaseUrlInput, params: NearbyPlacesParams) =>
-    request<NearbyPlacesResponse>(baseUrl, 'api/places/nearby', undefined, {
+  getNearbyPlaces: async (baseUrl: ApiBaseUrlInput, params: NearbyPlacesParams) => {
+    const edgeConfig = getNearbyPlacesFunctionConfig();
+    if (edgeConfig && authToken) {
+      try {
+        const headers: Record<string, string> = {
+          apikey: edgeConfig.publishableKey,
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        };
+        return await requestUrl<NearbyPlacesResponse>(edgeConfig.url, {
+          method: 'POST',
+          body: params,
+          headers,
+          timeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
+        }, SUPABASE_FUNCTION_TIMEOUT_MS);
+      } catch (error) {
+        console.warn('[RANDISH API] nearby-places Edge Function failed; falling back to Render.', error);
+      }
+    }
+    return request<NearbyPlacesResponse>(baseUrl, 'api/places/nearby', undefined, {
       method: 'POST',
       body: params,
-    }),
+    });
+  },
 
   enrichPremiumBusinessStatus: (baseUrl: ApiBaseUrlInput, restaurant: Restaurant) =>
     request<Restaurant>(baseUrl, 'api/google-places/business-status', undefined, {

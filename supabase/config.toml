@@ -1,2 +1,2 @@
 [functions.nearby-places]
-verify_jwt = false
+verify_jwt = true
