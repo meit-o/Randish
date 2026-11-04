@@ -52,3 +52,4 @@ server/package-lock.json
 tmp/
 .czrc
 .vercel/
+supabase/.temp/
