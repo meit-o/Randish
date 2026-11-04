@@ -685,12 +685,28 @@ export const randishApi = {
           Authorization: `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         };
-        return await requestUrl<NearbyPlacesResponse>(edgeConfig.url, {
+        const edgeResponse = await requestUrl<NearbyPlacesResponse>(edgeConfig.url, {
           method: 'POST',
           body: params,
           headers,
           timeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
         }, SUPABASE_FUNCTION_TIMEOUT_MS);
+        if (edgeResponse.places.length > 0) return edgeResponse;
+
+        // The two Edge providers have sparse coverage in some areas. Render may
+        // have stored restaurants or Google Places results for the same query.
+        try {
+          const renderResponse = await request<NearbyPlacesResponse>(baseUrl, 'api/places/nearby', undefined, {
+            method: 'POST',
+            body: params,
+            timeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
+            totalTimeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
+          });
+          if (renderResponse.places.length > 0 && renderResponse.source !== 'MOCK_PLACES') return renderResponse;
+        } catch (error) {
+          console.warn('[RANDISH API] Render nearby fallback failed after an empty Edge response.', error);
+        }
+        return edgeResponse;
       } catch (error) {
         console.warn('[RANDISH API] nearby-places Edge Function failed; falling back to Render.', error);
       }

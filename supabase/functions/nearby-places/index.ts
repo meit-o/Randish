@@ -1,8 +1,13 @@
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://randish.jp",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+const allowedOrigins = new Set([
+  "https://randish.jp",
+  "https://www.randish.jp",
+  "http://localhost:8081",
+  "http://127.0.0.1:8081",
+]);
 
 type NearbyRequest = {
   latitude?: number;
@@ -40,6 +45,16 @@ const CACHE_TTL_MS = 120_000;
 const responseCache = new Map<string, { expiresAt: number; body: Record<string, unknown> }>();
 
 Deno.serve(async (request) => {
+  const response = await handleRequest(request);
+  const origin = request.headers.get("Origin");
+  if (origin && allowedOrigins.has(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Vary", "Origin");
+  }
+  return response;
+});
+
+async function handleRequest(request: Request): Promise<Response> {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -158,7 +173,7 @@ Deno.serve(async (request) => {
   if (responseCache.size >= 100) responseCache.delete(responseCache.keys().next().value!);
   responseCache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, body: responseBody });
   return json(responseBody);
-});
+}
 
 async function searchHotPepper(key: string, lat: number, lng: number, radius: number, category?: string, budgetMax?: number | null): Promise<Candidate[]> {
   const params = new URLSearchParams({
