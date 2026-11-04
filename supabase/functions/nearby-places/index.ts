@@ -62,8 +62,23 @@ async function handleRequest(request: Request): Promise<Response> {
     return json({ error: "POST is required." }, 405);
   }
 
-  if (!request.headers.get("apikey")) {
-    return json({ error: "Supabase apikey header is required." }, 401);
+  const apikey = request.headers.get("apikey");
+  const authorization = request.headers.get("Authorization");
+  if (!apikey || !authorization?.startsWith("Bearer ")) {
+    return json({ error: "Supabase login is required." }, 401);
+  }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) {
+    return json({ error: "Supabase Auth is not configured." }, 503);
+  }
+  try {
+    const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { apikey, Authorization: authorization },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!authResponse.ok) return json({ error: "Supabase login is required." }, 401);
+  } catch {
+    return json({ error: "Supabase Auth is unavailable." }, 503);
   }
 
   let rawInput: unknown;
@@ -136,7 +151,8 @@ async function handleRequest(request: Request): Promise<Response> {
   let googlePlaces: Candidate[] = [];
   const googleEnabled = Deno.env.get("RANDISH_GOOGLE_PLACES_ENABLED") === "true";
   const googleKey = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? "";
-  if (googleEnabled && googleKey && uniquePrimary.length < MAX_RESULTS) {
+  // Use the paid provider only when the free providers found no nearby places.
+  if (googleEnabled && googleKey && uniquePrimary.length === 0) {
     try {
       googlePlaces = await searchGoogle(googleKey, latitude, longitude, radius, input.category, MAX_RESULTS - uniquePrimary.length);
     } catch (error) {
@@ -187,7 +203,7 @@ async function searchHotPepper(key: string, lat: number, lng: number, radius: nu
   });
   const genreCode = hotPepperGenre(category);
   if (genreCode) params.set("genre", genreCode);
-  if (category && category !== "すべて" && category.toLowerCase() !== "all") params.set("keyword", category);
+  if (category && category !== "すべて" && category.toLowerCase() !== "all" && category !== "random") params.set("keyword", category);
   const body = await fetchJson(`https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?${params}`);
   if (body?.results?.error?.message) throw new Error(`Hot Pepper API: ${String(body.results.error.message).slice(0, 200)}`);
   const shops = body?.results?.shop;
@@ -262,7 +278,7 @@ async function searchGoogle(key: string, lat: number, lng: number, radius: numbe
       "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.formattedAddress,places.rating,places.priceLevel,places.googleMapsUri,places.currentOpeningHours",
     },
     body: JSON.stringify({
-      textQuery: category ? `飲食店 ${category}` : "飲食店",
+      textQuery: category && category !== "すべて" && category !== "random" ? category : "飲食店",
       languageCode: "ja",
       regionCode: "JP",
       maxResultCount: Math.max(1, Math.min(limit, 20)),
