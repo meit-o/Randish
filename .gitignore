@@ -9,6 +9,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Generated presentation files
+/output/presentations/
+
 # Java / Maven
 target/
 **/target/

@@ -389,7 +389,7 @@ type ApiErrorKind = 'connection' | 'timeout' | 'http';
 // サーバー（Render無料プラン）はスリープからの復帰に60秒前後かかることがある。
 // 以前は5秒/合計9秒で諦めていたため、起動待ちのあいだ通信が必ず失敗し、
 // 画面には「候補0件」と出てしまっていた。起動を待てる長さにする。
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 75000;
 const REQUEST_TOTAL_TIMEOUT_MS = 75000;
 const MAGIC_LINK_REQUEST_TIMEOUT_MS = 75000;
 const MIN_REQUEST_TIMEOUT_MS = 1200;
@@ -469,7 +469,6 @@ const requestUrl = async <T>(url: string, options: RequestOptions = {}, timeoutM
   const safeTimeoutMs = Math.max(MIN_REQUEST_TIMEOUT_MS, timeoutMs);
   const timeoutId = setTimeout(() => controller.abort(), safeTimeoutMs);
 
-  let response: Response;
   try {
     const headers: Record<string, string> = { ...(options.headers ?? {}) };
     if (options.body) {
@@ -479,13 +478,22 @@ const requestUrl = async <T>(url: string, options: RequestOptions = {}, timeoutM
       headers.Authorization = `Bearer ${authToken}`;
     }
 
-    response = await fetch(url, {
+    const response = await fetch(url, {
       method: options.method ?? 'GET',
       headers: Object.keys(headers).length ? headers : undefined,
       body: options.body ? JSON.stringify(options.body) : undefined,
       signal: controller.signal,
     });
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
+      const message = errorBody?.message ?? `RANDISH API error: ${response.status}`;
+      throw new RandishApiError(`${message} (${url})`, 'http', url, response.status);
+    }
+    if (response.status === 204) return undefined as T;
+    // ヘッダー受信後も本文の読み込みが終わるまでタイムアウトを有効にする。
+    return await response.json() as T;
   } catch (error) {
+    if (error instanceof RandishApiError) throw error;
     if (error instanceof Error && error.name === 'AbortError') {
       throw new RandishApiError(`API timeout: ${url}`, 'timeout', url);
     }
@@ -493,18 +501,6 @@ const requestUrl = async <T>(url: string, options: RequestOptions = {}, timeoutM
   } finally {
     clearTimeout(timeoutId);
   }
-
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    const message = errorBody?.message ?? `RANDISH API error: ${response.status}`;
-    throw new RandishApiError(`${message} (${url})`, 'http', url, response.status);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
 };
 
 const request = async <T>(
