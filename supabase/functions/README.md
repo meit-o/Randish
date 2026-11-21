@@ -1,42 +1,35 @@
-# Edge Functions
+# Supabase Edge Functions
 
-## `nearby-places` の試験
+## nearby-places
 
-近隣・地図検索をSupabase Edge Functionsで試すための仮APIです。既存アプリのAPI接続先は変更せず、Postmanから既存の `/api/places/nearby` と結果を比較できます。
+地図の近くにある飲食店候補を Hot Pepper と Geoapify から取得する API です。両者で0件のときだけ、設定で有効にした Google Places を検索します。
 
-### 登録する秘密情報
+### ローカル・Postmanでの確認
 
-Supabase CLIでログインし、対象プロジェクトをリンクしてから以下を設定します。
+Supabase CLI で対象プロジェクトをリンクし、API キーを登録して関数をデプロイします。
 
 ```powershell
 supabase link --project-ref YOUR_PROJECT_REF
-supabase secrets set RANDISH_EDGE_TEST_TOKEN="Postmanで使う長いランダム文字列"
 supabase secrets set GEOAPIFY_API_KEY="GeoapifyのAPIキー"
 supabase secrets set HOTPEPPER_API_KEY="Hot PepperのAPIキー"
+supabase functions deploy nearby-places --project-ref YOUR_PROJECT_REF
 ```
 
-Google Placesも試すときだけ設定します。課金が発生する可能性があるため、明示的に有効化した場合だけ呼び出します。
+Hot Pepper・Geoapify に掲載が少ない地域でも探す場合、Google Places を追加できます。Google の利用料金と上限を確認してから、Supabase の Secrets に登録してください。
 
 ```powershell
 supabase secrets set GOOGLE_PLACES_API_KEY="Google PlacesのAPIキー"
 supabase secrets set RANDISH_GOOGLE_PLACES_ENABLED="true"
+supabase functions deploy nearby-places --remote=YOUR_PROJECT_REF
 ```
 
-登録したらデプロイします。
+Postman は `POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/nearby-places` に JSON を送ります。
 
-```powershell
-supabase functions deploy nearby-places --project-ref YOUR_PROJECT_REF
-```
+Headers:
 
-### Postmanから呼び出す
-
-- Method: `POST`
-- URL: `https://YOUR_PROJECT_REF.supabase.co/functions/v1/nearby-places`
-- Headers:
-  - `Content-Type`: `application/json`
-  - `apikey`: Supabaseの公開 anon key
-  - `x-randish-test-token`: `RANDISH_EDGE_TEST_TOKEN` に設定した値
-- Body: `raw` / `JSON`
+- `apikey`: Supabase の publishable key（旧 anon key）
+- `Authorization`: `Bearer <Supabase Auth の access token>`
+- `Content-Type`: `application/json`
 
 ```json
 {
@@ -49,12 +42,25 @@ supabase functions deploy nearby-places --project-ref YOUR_PROJECT_REF
 }
 ```
 
-`diagnostics.providers` に提供元ごとの設定状態・件数が返ります。提供元ごとのエラーは `diagnostics.errors` で確認できます。試験用トークンが未登録の場合、関数はリクエストを拒否します。
+レスポンスの `places` に店舗候補、`diagnostics.providers` に各プロバイダーの取得件数が入ります。
 
-## 試験版の範囲
+## アプリから段階的に使う
 
-- Hot Pepper、Geoapifyを並行して検索し、Google Placesはキーと有効化フラグの両方がある場合だけ追加検索します。
-- 既存APIと同じ候補の基本形式を返します。
-- キャッシュはまだありません。Postmanでリクエストするたび、設定済みの各提供元APIを呼び出します。Google Placesは課金に注意してください。
-- 既存APIと同等のPremium判定、写真の補完などはまだ移していません。結果を比べてから機能を移し、アプリの接続先を切り替えます。
-- `verify_jwt` は試験用に無効にしています。`x-randish-test-token` を必須にし、試験用トークンをアプリや公開コードに入れないでください。
+`mobile/.env` に次の値を設定してアプリを再起動すると、ログイン中の地図検索だけ Edge Function を先に呼びます。未ログイン時や Edge Function が失敗した場合は Render の `/api/places/nearby` にフォールバックします。その他の API は引き続き Render を使います。
+
+```dotenv
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+ローカルで Render 側の API も使う場合は、`EXPO_PUBLIC_RANDISH_API_BASE_URL=https://randish-api.onrender.com` も設定します。Edge Function が0件を返した場合、実店舗候補があれば Render の結果を採用します。
+
+publishable key はクライアントに含まれる公開キーです。Hot Pepper・Geoapify のキーや Supabase secret key はここに設定しないでください。
+
+## 移行の範囲と注意
+
+- 現在 Edge Function が置き換えるのは地図・近隣検索だけです。候補一覧、抽選、認証、履歴、保存、課金などは Render API のままです。
+- アプリ設定を入れる前は既存の Render API を使います。
+- Supabase Auth の有効な access token を `Authorization` に送ります。関数は Supabase Auth でそのトークンを確認してから外部 API を呼びます。
+- キャッシュは Edge Function の実行インスタンス内で 2 分保持します。インスタンスが切り替わるとキャッシュも消えます。
+- Edge Function のコード変更は Supabase に自動反映されません。変更後は CLI で再デプロイが必要です。

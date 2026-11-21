@@ -4807,6 +4807,7 @@ const buildRestaurantCacheKey = (params: {
   latitude?: number;
   longitude?: number;
   range?: number;
+  distanceMeters?: number;
   userId?: string;
 }) => [
   // Premium かどうかで結果の中身が変わる（Google Places を引くかどうか）。
@@ -4819,6 +4820,7 @@ const buildRestaurantCacheKey = (params: {
   params.latitude != null ? params.latitude.toFixed(3) : '',
   params.longitude != null ? params.longitude.toFixed(3) : '',
   params.range ?? '',
+  params.distanceMeters ?? '',
 ].join('|');
 
 /** 候補生成時にこちらが付ける定型文。店が書いた紹介文ではないので、根拠として引用しない。 */
@@ -6420,6 +6422,9 @@ export default function App() {
   // これが無いと、エリアを変えた直後に前の街の候補が残り、
   // 地図がその街（＝多くの場合は現在地）を指してしまう。
   const [restaurantsArea, setRestaurantsArea] = useState('');
+  const [restaurantsQueryKey, setRestaurantsQueryKey] = useState('');
+  const restaurantSearchRunRef = useRef(0);
+  const restaurantSearchKeyRef = useRef('');
   // 同じ条件での再検索を避けるためのキャッシュ。画面を戻ったときも即座に出る。
   const restaurantListCacheRef = useRef(new Map<string, {
     restaurants: Restaurant[];
@@ -6466,6 +6471,8 @@ export default function App() {
   const [drawMode, setDrawMode] = useState<DrawMode>('condition');
   const [mapRouletteStatus, setMapRouletteStatus] = useState<MapRouletteStatus>('idle');
   const [mapCandidates, setMapCandidates] = useState<CandidatePlace[]>([]);
+  const [mapCandidatesSearchKey, setMapCandidatesSearchKey] = useState('');
+  const candidatePoolRunRef = useRef(0);
   const [mapRouletteTarget, setMapRouletteTarget] = useState<CandidatePlace | null>(null);
   // 抽選演出で「脱落した」候補。1つずつ薄くしていき、最後に残った1件を当選店として際立たせる。
   const [eliminatedCandidateIds, setEliminatedCandidateIds] = useState<string[]>([]);
@@ -7059,6 +7066,8 @@ export default function App() {
     }),
     [apiParams, conditionRandom.genre],
   );
+  const restaurantSearchKey = buildRestaurantCacheKey(previewApiParams);
+  restaurantSearchKeyRef.current = restaurantSearchKey;
 
   const drawApiParams = useMemo(
     () => apiParams,
@@ -7078,9 +7087,11 @@ export default function App() {
   // エリアを切り替えた直後は、前の街の候補をいっさい使わない。
   // 「江東区を選んでいるのに地図が大阪（＝現在地）」を根本から防ぐ。
   const areaMatchedRestaurants = useMemo(
-    () => (restaurantsArea === area.trim() ? restaurants : []),
-    [area, restaurants, restaurantsArea],
+    () => (restaurantsArea === area.trim() && restaurantsQueryKey === restaurantSearchKey ? restaurants : []),
+    [area, restaurants, restaurantsArea, restaurantsQueryKey, restaurantSearchKey],
   );
+  const matchingRestaurantsRef = useRef<Restaurant[]>([]);
+  matchingRestaurantsRef.current = areaMatchedRestaurants;
 
   /**
    * 見つかった店そのものから中心を出す。
@@ -7124,7 +7135,8 @@ export default function App() {
     const fromSearchList = areaMatchedRestaurants
       .map(restaurantToCandidatePlace)
       .filter((place): place is CandidatePlace => place != null);
-    const merged = mergeCandidatePlaces(fromSearchList, mapCandidates);
+    const merged = mergeCandidatePlaces(fromSearchList,
+      mapCandidatesSearchKey === restaurantSearchKey ? mapCandidates : []);
     // 指定した距離の外にある店は落とす。
     // Google由来の結果はサーバー側で距離を絞っていないため、
     // 1.5kmと指定したのに数km先の店が混ざり、地図の中心まで引っ張られていた。
@@ -7159,6 +7171,8 @@ export default function App() {
     areaMatchedRestaurants,
     distance,
     mapCandidates,
+    mapCandidatesSearchKey,
+    restaurantSearchKey,
     excludedKeys,
     minRating,
     openNowOnly,
@@ -7338,11 +7352,17 @@ export default function App() {
   }, [apiBaseUrlCandidates, budgetMax, distance, genre, syncWorkingApiBaseUrl, travelDisplayArea]);
 
   const loadRestaurants = useCallback(async () => {
+    const runId = ++restaurantSearchRunRef.current;
+    const requestedArea = area.trim();
+    const cacheKey = buildRestaurantCacheKey(previewApiParams);
+    const isCurrentSearch = () => restaurantSearchRunRef.current === runId
+      && restaurantSearchKeyRef.current === cacheKey;
     // 現在地もエリア指定も無い状態（起動直後のGPS取得前など）で検索すると必ず0件になる。
     // 誤って「0件」と見せないよう、条件が揃うまで検索しない。
     const hasSearchScope = Boolean(previewApiParams.area)
       || (previewApiParams.latitude != null && previewApiParams.longitude != null);
     if (!hasSearchScope) {
+      setIsLoading(false);
       setMessage('現在地を確認しています。位置情報が取れたら近くのお店を探します。');
       return;
     }
@@ -7350,18 +7370,20 @@ export default function App() {
     // 同じ場所・同じ条件なら取り直さない。
     // 家や職場から繰り返し引くのが普通の使い方なので、そのたびに数十秒待たせると
     // 「重いアプリ」になってしまう。サーバーの負荷とAPI課金も減る。
-    const cacheKey = buildRestaurantCacheKey(previewApiParams);
     const cached = restaurantListCacheRef.current.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < RESTAURANT_LIST_CACHE_TTL_MS) {
       setRestaurants(cached.restaurants);
-      setRestaurantsArea(areaRef.current.trim());
+      setRestaurantsArea(requestedArea);
+      setRestaurantsQueryKey(cacheKey);
       setMessage(cached.message);
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
       let data = await randishApi.getRestaurants(apiBaseUrlCandidates, previewApiParams);
+      if (!isCurrentSearch()) return;
       syncWorkingApiBaseUrl();
       let relaxedByBudget = false;
       // 予算の初期値（1,500円）のままだと、焼肉など単価の高いジャンルが全滅して0件になる。
@@ -7369,6 +7391,7 @@ export default function App() {
       if (!data.length && previewApiParams.budgetMax && previewApiParams.budgetMax < 999999) {
         const withoutBudget = { ...previewApiParams, budgetMin: undefined, budgetMax: undefined };
         const relaxed = await randishApi.getRestaurants(apiBaseUrlCandidates, withoutBudget);
+        if (!isCurrentSearch()) return;
         if (relaxed.length) {
           data = relaxed;
           relaxedByBudget = true;
@@ -7381,9 +7404,11 @@ export default function App() {
       // サーバーの結果をそのまま使う。（「候補0件なのに抽選では店が出る」不一致を防ぐ）
       const normalized = genreMatched.length ? genreMatched : apiRestaurants;
       setRestaurants(normalized);
-      setRestaurantsArea(areaRef.current.trim());
+      setRestaurantsArea(requestedArea);
+      setRestaurantsQueryKey(cacheKey);
       // 表示文もそのまま控える。次に同じ条件で来たとき、件数だけ出て説明が消えると不自然なため。
       const setMessageAndCache = (text: string) => {
+        if (!isCurrentSearch()) return;
         restaurantListCacheRef.current.set(cacheKey, {
           restaurants: normalized,
           message: text,
@@ -7413,12 +7438,14 @@ export default function App() {
         setMessageAndCache(diagnosticMessage ?? `${genreLabel}に合うお店が見つかりませんでした。エリアやジャンルを変えてみてください。`);
       }
     } catch (error) {
+      if (!isCurrentSearch()) return;
       logApiUiError('restaurant search failed', error, apiBaseUrlCandidates);
       if (shouldUseRestaurantDemoFallback(error)) {
         const normalized = searchLocalRestaurants(previewApiParams)
           .filter((restaurant) => conditionRandom.genre || restaurantMatchesSelectedGenre(restaurant, genre));
         setRestaurants(normalized);
-        setRestaurantsArea(areaRef.current.trim());
+        setRestaurantsArea(requestedArea);
+        setRestaurantsQueryKey(cacheKey);
         const genreLabel = genre === 'すべて' ? 'すべてのジャンル' : genre;
         const fallbackPrefix = '通信できないため確認用の候補を表示しています。';
         if (hasHiddenPreviewCondition) {
@@ -7440,9 +7467,10 @@ export default function App() {
       }
       setRestaurants([]);
       const diagnosticMessage = await loadGenreDiagnosticMessage();
+      if (!isCurrentSearch()) return;
       setMessage(diagnosticMessage ?? API_CONNECTION_MESSAGE);
     } finally {
-      setIsLoading(false);
+      if (isCurrentSearch()) setIsLoading(false);
     }
   }, [apiBaseUrlCandidates, area, buildFewCandidatesHint, conditionRandom.area, conditionRandom.genre, genre, hasHiddenPreviewCondition, loadGenreDiagnosticMessage, previewApiParams, syncWorkingApiBaseUrl]);
 
@@ -8590,20 +8618,46 @@ export default function App() {
   }, []);
 
   const loadCandidatePool = useCallback(async (query: CandidateQuery) => {
+    const runId = ++candidatePoolRunRef.current;
+    const searchKey = restaurantSearchKey;
+    const searchCandidates = () => matchingRestaurantsRef.current
+      .map(restaurantToCandidatePlace)
+      .filter((place): place is CandidatePlace => place != null);
+    // 一覧・地図・抽選に同じ条件を適用する。写真の有無は抽選条件にしない。
+    const eligibleCandidates = (places: CandidatePlace[]) => places.filter((candidate) =>
+      distanceBetweenLocationsMeters(query.center, {
+        latitude: candidate.latitude, longitude: candidate.longitude, label: '',
+      }) <= query.radius
+      && !excludedKeys.has(excludedKeyForCandidate(candidate))
+      && (!subscription.isPro || candidateMatchesPremiumConditions(candidate, minRating, openNowOnly)));
+    const publish = (entry: CandidateCacheEntry) => {
+      if (restaurantSearchKeyRef.current !== searchKey || candidatePoolRunRef.current !== runId) return;
+      candidateCacheRef.current = entry;
+      setMapCandidatesSearchKey(searchKey);
+      setMapCandidates(entry.candidates);
+      setMapRouletteStatus(entry.candidates.length ? 'candidatesReady' : 'empty');
+    };
     const cached = getUsableCandidateCache(query);
     if (cached) {
       console.info('[RANDISH MAP] キャッシュからの再抽選');
       // キャッシュ後に候補一覧が更新されている場合もあるので、ここでも取り込む。
-      const cachedSearchCandidates = restaurantsRef.current
-        .map(restaurantToCandidatePlace)
-        .filter((place): place is CandidatePlace => place != null);
-      const cachedMerged = mergeCandidatePlaces(cached.candidates, cachedSearchCandidates)
-        .filter((candidate) => !subscription.isPro
-          || candidateMatchesPremiumResult(candidate, minRating, openNowOnly));
+      const cachedMerged = eligibleCandidates(mergeCandidatePlaces(cached.candidates, searchCandidates()));
       cached.candidates = cachedMerged;
-      setMapCandidates(cachedMerged);
-      setMapRouletteStatus(cachedMerged.length ? 'candidatesReady' : 'empty');
+      publish(cached);
       return cached;
+    }
+
+    // 一覧ですでに取得できた店舗をそのまま使う。別APIの失敗や起動待ちで
+    // 「一覧は45件、地図と抽選は0件」になることを防ぐ。
+    const listedCandidates = eligibleCandidates(searchCandidates());
+    if (listedCandidates.length) {
+      const entry: CandidateCacheEntry = {
+        key: query.key, center: query.center,
+        candidates: prioritizeCandidatesForSituation(listedCandidates, subscription.isPro ? situation : 'none'),
+        fetchedAt: Date.now(), usedIds: [], lastSelectedId: null, source: 'RESTAURANT_SEARCH',
+      };
+      publish(entry);
+      return entry;
     }
 
     setMapRouletteStatus('searching');
@@ -8612,25 +8666,27 @@ export default function App() {
       category: query.category ?? 'all',
       priceRange: query.priceRange ?? 'any',
     });
-    const response = await randishApi.getNearbyPlaces(apiBaseUrlCandidates, {
-      latitude: query.center.latitude,
-      longitude: query.center.longitude,
-      radius: query.radius,
-      category: query.category,
-      priceRange: query.priceRange,
-      openNow: query.openNow,
-      minRating: query.minRating,
-    });
+    let response;
+    try {
+      response = await randishApi.getNearbyPlaces(apiBaseUrlCandidates, {
+        latitude: query.center.latitude,
+        longitude: query.center.longitude,
+        radius: query.radius,
+        category: query.category,
+        priceRange: query.priceRange,
+        openNow: query.openNow,
+        minRating: query.minRating,
+      });
+    } catch (error) {
+      // 近隣検索を待つ間に一覧が取得できた場合も、その候補を失わない。
+      if (!eligibleCandidates(searchCandidates()).length) throw error;
+      response = { places: [] as CandidatePlace[], source: 'RESTAURANT_SEARCH' };
+    }
     syncWorkingApiBaseUrl();
     // 地図のピン＝抽選対象。候補一覧に出ている店（座標があるもの）も混ぜて、
     // 「38件と出ているのにピンが少ない」というズレをなくす。
-    const searchCandidates = restaurantsRef.current
-      .map(restaurantToCandidatePlace)
-      .filter((place): place is CandidatePlace => place != null);
     const mergedCandidates = prioritizeCandidatesForSituation(
-      mergeCandidatePlaces(response.places ?? [], searchCandidates)
-        .filter((candidate) => !subscription.isPro
-          || candidateMatchesPremiumResult(candidate, minRating, openNowOnly)),
+      eligibleCandidates(mergeCandidatePlaces(response.places ?? [], searchCandidates())),
       subscription.isPro ? situation : 'none',
     );
     const nextCache: CandidateCacheEntry = {
@@ -8642,11 +8698,9 @@ export default function App() {
       lastSelectedId: null,
       source: response.source,
     };
-    candidateCacheRef.current = nextCache;
-    setMapCandidates(nextCache.candidates);
-    setMapRouletteStatus(nextCache.candidates.length ? 'candidatesReady' : 'empty');
+    publish(nextCache);
     return nextCache;
-  }, [apiBaseUrlCandidates, getUsableCandidateCache, minRating, openNowOnly, situation, subscription.isPro, syncWorkingApiBaseUrl]);
+  }, [apiBaseUrlCandidates, excludedKeys, getUsableCandidateCache, minRating, openNowOnly, restaurantSearchKey, situation, subscription.isPro, syncWorkingApiBaseUrl]);
 
   const chooseMapRouletteRestaurant = useCallback(async () => {
     if (mapRouletteStatus === 'searching' || mapRouletteStatus === 'spinning') {
@@ -8686,6 +8740,10 @@ export default function App() {
       }
 
       const cacheEntry = await loadCandidatePool(query);
+      if (restaurantSearchKeyRef.current !== restaurantSearchKey || candidateCacheRef.current?.key !== query.key) {
+        setIsLoading(false);
+        return;
+      }
       if (cacheEntry.candidates.length === 0) {
         const premiumConditionMessage = subscription.isPro
           ? buildPremiumConditionNoMatchMessage(
@@ -8874,6 +8932,10 @@ export default function App() {
       };
       sweep();
     } catch (error) {
+      if (restaurantSearchKeyRef.current !== restaurantSearchKey) {
+        setIsLoading(false);
+        return;
+      }
       setMapRouletteStatus('error');
       setMapCandidates([]);
       setMapRouletteTarget(null);
@@ -8916,6 +8978,7 @@ export default function App() {
     mapPinProgress,
     mapRouletteStatus,
     recordDrawForAnalytics,
+    restaurantSearchKey,
     reduceMotionEnabled,
     resultRevealValue,
     revealSelectedRestaurant,
@@ -8929,7 +8992,7 @@ export default function App() {
     if (activeTab !== 'random' || drawMode === 'everything') {
       return undefined;
     }
-    if (mapRouletteStatus === 'searching' || mapRouletteStatus === 'spinning' || mapRouletteStatus === 'result') {
+    if (mapRouletteStatus === 'spinning' || mapRouletteStatus === 'result') {
       return undefined;
     }
 

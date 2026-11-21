@@ -389,10 +389,19 @@ type ApiErrorKind = 'connection' | 'timeout' | 'http';
 // サーバー（Render無料プラン）はスリープからの復帰に60秒前後かかることがある。
 // 以前は5秒/合計9秒で諦めていたため、起動待ちのあいだ通信が必ず失敗し、
 // 画面には「候補0件」と出てしまっていた。起動を待てる長さにする。
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 75000;
 const REQUEST_TOTAL_TIMEOUT_MS = 75000;
 const MAGIC_LINK_REQUEST_TIMEOUT_MS = 75000;
 const MIN_REQUEST_TIMEOUT_MS = 1200;
+const SUPABASE_FUNCTION_TIMEOUT_MS = 12000;
+
+const getNearbyPlacesFunctionConfig = () => {
+  const projectUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(/\/+$/, '');
+  const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  return projectUrl && publishableKey
+    ? { url: `${projectUrl}/functions/v1/nearby-places`, publishableKey }
+    : null;
+};
 
 export class RandishApiError extends Error {
   constructor(
@@ -460,7 +469,6 @@ const requestUrl = async <T>(url: string, options: RequestOptions = {}, timeoutM
   const safeTimeoutMs = Math.max(MIN_REQUEST_TIMEOUT_MS, timeoutMs);
   const timeoutId = setTimeout(() => controller.abort(), safeTimeoutMs);
 
-  let response: Response;
   try {
     const headers: Record<string, string> = { ...(options.headers ?? {}) };
     if (options.body) {
@@ -470,13 +478,22 @@ const requestUrl = async <T>(url: string, options: RequestOptions = {}, timeoutM
       headers.Authorization = `Bearer ${authToken}`;
     }
 
-    response = await fetch(url, {
+    const response = await fetch(url, {
       method: options.method ?? 'GET',
       headers: Object.keys(headers).length ? headers : undefined,
       body: options.body ? JSON.stringify(options.body) : undefined,
       signal: controller.signal,
     });
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
+      const message = errorBody?.message ?? `RANDISH API error: ${response.status}`;
+      throw new RandishApiError(`${message} (${url})`, 'http', url, response.status);
+    }
+    if (response.status === 204) return undefined as T;
+    // ヘッダー受信後も本文の読み込みが終わるまでタイムアウトを有効にする。
+    return await response.json() as T;
   } catch (error) {
+    if (error instanceof RandishApiError) throw error;
     if (error instanceof Error && error.name === 'AbortError') {
       throw new RandishApiError(`API timeout: ${url}`, 'timeout', url);
     }
@@ -484,18 +501,6 @@ const requestUrl = async <T>(url: string, options: RequestOptions = {}, timeoutM
   } finally {
     clearTimeout(timeoutId);
   }
-
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    const message = errorBody?.message ?? `RANDISH API error: ${response.status}`;
-    throw new RandishApiError(`${message} (${url})`, 'http', url, response.status);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
 };
 
 const request = async <T>(
@@ -667,11 +672,46 @@ export const randishApi = {
   getAreaCenter: (baseUrl: ApiBaseUrlInput, area: string) =>
     request<AreaCenter | null>(baseUrl, 'api/places/area-center', { area }),
 
-  getNearbyPlaces: (baseUrl: ApiBaseUrlInput, params: NearbyPlacesParams) =>
-    request<NearbyPlacesResponse>(baseUrl, 'api/places/nearby', undefined, {
+  getNearbyPlaces: async (baseUrl: ApiBaseUrlInput, params: NearbyPlacesParams) => {
+    const edgeConfig = getNearbyPlacesFunctionConfig();
+    if (edgeConfig && authToken) {
+      try {
+        const headers: Record<string, string> = {
+          apikey: edgeConfig.publishableKey,
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        };
+        const edgeResponse = await requestUrl<NearbyPlacesResponse>(edgeConfig.url, {
+          method: 'POST',
+          body: params,
+          headers,
+          timeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
+        }, SUPABASE_FUNCTION_TIMEOUT_MS);
+        if (edgeResponse.places.length > 0) return edgeResponse;
+
+        // The two Edge providers have sparse coverage in some areas. Render may
+        // have stored restaurants or Google Places results for the same query.
+        try {
+          const renderResponse = await request<NearbyPlacesResponse>(baseUrl, 'api/places/nearby', undefined, {
+            method: 'POST',
+            body: params,
+            timeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
+            totalTimeoutMs: SUPABASE_FUNCTION_TIMEOUT_MS,
+          });
+          if (renderResponse.places.length > 0 && renderResponse.source !== 'MOCK_PLACES') return renderResponse;
+        } catch (error) {
+          console.warn('[RANDISH API] Render nearby fallback failed after an empty Edge response.', error);
+        }
+        return edgeResponse;
+      } catch (error) {
+        console.warn('[RANDISH API] nearby-places Edge Function failed; falling back to Render.', error);
+      }
+    }
+    return request<NearbyPlacesResponse>(baseUrl, 'api/places/nearby', undefined, {
       method: 'POST',
       body: params,
-    }),
+    });
+  },
 
   enrichPremiumBusinessStatus: (baseUrl: ApiBaseUrlInput, restaurant: Restaurant) =>
     request<Restaurant>(baseUrl, 'api/google-places/business-status', undefined, {
