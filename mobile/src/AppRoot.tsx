@@ -8587,9 +8587,14 @@ export default function App() {
    * 地図のピン（CandidatePlace）から作った店には席・設備の情報が入らない。
    * 同じ店が候補一覧にもいれば、そちらが持っている情報を移してくる。
    * これが無いと、抽選で当たった店だけ「個室あり」などの理由を出せなくなる。
+   * 予算も同じ問題を抱える: ピン側の予算は priceLevel からの推定で、価格不明だと
+   * 0〜999,999 の仮値になる。一覧側に円表記の予算があれば、当選店の予算が
+   * 仮値の場合に限り引き継ぐ（結果画面の「予算目安なし」と履歴への仮値混入を防ぐ）。
    */
-  const withFacilitiesFromSearchList = useCallback((restaurant: Restaurant): Restaurant => {
-    if (restaurant.facilities) {
+  const withSearchListDetails = useCallback((restaurant: Restaurant): Restaurant => {
+    const winnerBudgetMax = toOptionalNumber(restaurant.budgetMax);
+    const winnerBudgetUnknown = winnerBudgetMax == null || winnerBudgetMax >= 100000;
+    if (restaurant.facilities && !winnerBudgetUnknown) {
       return restaurant;
     }
     const place = restaurantToCandidatePlace(restaurant);
@@ -8601,7 +8606,23 @@ export default function App() {
       const itemPlace = restaurantToCandidatePlace(item);
       return itemPlace ? candidatePlaceKey(itemPlace) === key : false;
     });
-    return matched?.facilities ? { ...restaurant, facilities: matched.facilities } : restaurant;
+    if (!matched) {
+      return restaurant;
+    }
+    let merged = restaurant;
+    if (!merged.facilities && matched.facilities) {
+      merged = { ...merged, facilities: matched.facilities };
+    }
+    const matchedBudgetMax = toOptionalNumber(matched.budgetMax);
+    if (winnerBudgetUnknown && matchedBudgetMax != null && matchedBudgetMax > 0 && matchedBudgetMax < 100000) {
+      merged = {
+        ...merged,
+        budgetMin: toOptionalNumber(matched.budgetMin) ?? 0,
+        budgetMax: matchedBudgetMax,
+        priceRange: matched.priceRange ?? merged.priceRange,
+      };
+    }
+    return merged;
   }, []);
 
   const getUsableCandidateCache = useCallback((query: CandidateQuery) => {
@@ -8851,7 +8872,7 @@ export default function App() {
         let finalCandidate: CandidatePlace | null = null;
         let normalized: Restaurant | null = null;
         for (const candidate of validationQueue) {
-          const enrichedCandidate = withFacilitiesFromSearchList(
+          const enrichedCandidate = withSearchListDetails(
             await enrichPremiumPlaceDetails(
               candidatePlaceToRestaurant(candidate, areaRef.current, genre),
             ),
@@ -17348,6 +17369,14 @@ function AnalyticsTab({
               budgetMax: entry.budgetMax ?? toOptionalNumber(entry.restaurant?.budgetMax) ?? null,
             };
             const budget = getHistoryEstimatedBudget(displayEntry);
+            // メタ行の予算は「そのとき指定した条件」だけを出す。displayEntry は
+            // 想定支出の推定用に店の価格帯で補完したもので、条件が記録されて
+            // いない履歴では店の仮値（0〜999,999）が条件のように見えてしまう。
+            const conditionEntry = {
+              ...displayEntry,
+              budgetMin: entry.budgetMin ?? null,
+              budgetMax: entry.budgetMax ?? null,
+            };
             const title = `${displayEntry.genre ?? 'お店'}の履歴`;
             const editing = editingSpendId === entry.id;
             const hasActual = entry.actualSpend != null && entry.actualSpend > 0;
@@ -17356,7 +17385,7 @@ function AnalyticsTab({
                 <Text style={styles.analysisHistoryDate}>{formatShortDate(entry.createdAt)}</Text>
                 <View style={styles.analysisHistoryBody}>
                   <Text style={styles.analysisHistoryName} numberOfLines={1}>{title}</Text>
-                  <Text style={styles.analysisHistoryMeta} numberOfLines={1}>{buildHistoryMetaLine(displayEntry)}</Text>
+                  <Text style={styles.analysisHistoryMeta} numberOfLines={1}>{buildHistoryMetaLine(conditionEntry)}</Text>
                 </View>
                 {editing ? (
                   <View style={styles.analysisSpendEditRow}>
@@ -18033,8 +18062,10 @@ function HistoryEntrySection({
           ...entry,
           area: entry.area ?? entry.restaurant?.area ?? null,
           genre: entry.genre ?? entry.restaurant?.genre ?? null,
-          budgetMin: entry.budgetMin ?? toOptionalNumber(entry.restaurant?.budgetMin) ?? null,
-          budgetMax: entry.budgetMax ?? toOptionalNumber(entry.restaurant?.budgetMax) ?? null,
+          // 予算は指定した条件だけを出す。店の価格帯で補完すると、条件が
+          // 記録されていない履歴に店の仮値（0〜999,999）が混ざってしまう。
+          budgetMin: entry.budgetMin ?? null,
+          budgetMax: entry.budgetMax ?? null,
         };
         return (
           <View key={`${entry.id}-history-lookup`} style={styles.historyLookupCard}>
