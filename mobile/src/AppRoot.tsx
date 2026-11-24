@@ -7434,8 +7434,15 @@ export default function App() {
           ? `${genreLabel}で${normalized.length}件。${hint}`
           : `${genreLabel}で${normalized.length}件から候補を整えました。見つかったジャンル: ${apiGenres}`);
       } else {
-        const diagnosticMessage = await loadGenreDiagnosticMessage();
-        setMessageAndCache(diagnosticMessage ?? `${genreLabel}に合うお店が見つかりませんでした。エリアやジャンルを変えてみてください。`);
+        setMessageAndCache(`${genreLabel}に合うお店が見つかりませんでした。エリアやジャンルを変えてみてください。`);
+        // 診断（別の検索をもう一度叩く）で読み込み解除を待たせない。
+        // 「候補を確認中」が診断の間ずっと出続けてしまうため、結果が返った時点で
+        // まだ同じ検索が表示対象なら文面だけ差し替える。
+        void loadGenreDiagnosticMessage().then((diagnosticMessage) => {
+          if (diagnosticMessage) {
+            setMessageAndCache(diagnosticMessage);
+          }
+        });
       }
     } catch (error) {
       if (!isCurrentSearch()) return;
@@ -7466,9 +7473,13 @@ export default function App() {
         return;
       }
       setRestaurants([]);
-      const diagnosticMessage = await loadGenreDiagnosticMessage();
-      if (!isCurrentSearch()) return;
-      setMessage(diagnosticMessage ?? API_CONNECTION_MESSAGE);
+      setMessage(API_CONNECTION_MESSAGE);
+      // 診断は読み込み解除を待たせない。返った時点で同じ検索が対象なら文面だけ差し替える。
+      void loadGenreDiagnosticMessage().then((diagnosticMessage) => {
+        if (diagnosticMessage && isCurrentSearch()) {
+          setMessage(diagnosticMessage);
+        }
+      });
     } finally {
       if (isCurrentSearch()) setIsLoading(false);
     }
@@ -8668,15 +8679,30 @@ export default function App() {
     });
     let response;
     try {
-      response = await randishApi.getNearbyPlaces(apiBaseUrlCandidates, {
-        latitude: query.center.latitude,
-        longitude: query.center.longitude,
-        radius: query.radius,
-        category: query.category,
-        priceRange: query.priceRange,
-        openNow: query.openNow,
-        minRating: query.minRating,
-      });
+      // 一時的な通信失敗で候補が0件のまま固まらないよう、接続エラーに限り
+      // 間を空けて一度だけ取り直す。それでも駄目なら呼び出し側のエラー表示に委ねる。
+      const maxAttempts = 2;
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          response = await randishApi.getNearbyPlaces(apiBaseUrlCandidates, {
+            latitude: query.center.latitude,
+            longitude: query.center.longitude,
+            radius: query.radius,
+            category: query.category,
+            priceRange: query.priceRange,
+            openNow: query.openNow,
+            minRating: query.minRating,
+          });
+          break;
+        } catch (error) {
+          const isStaleRun = candidatePoolRunRef.current !== runId
+            || restaurantSearchKeyRef.current !== searchKey;
+          if (attempt >= maxAttempts || !isApiConnectivityError(error) || isStaleRun) {
+            throw error;
+          }
+          await new Promise<void>((resolve) => { setTimeout(resolve, 1000); });
+        }
+      }
     } catch (error) {
       // 近隣検索を待つ間に一覧が取得できた場合も、その候補を失わない。
       if (!eligibleCandidates(searchCandidates()).length) throw error;
