@@ -23,7 +23,9 @@ const deferred = () => { let resolve, reject; const promise = new Promise((yes, 
 const makeRestaurant = (i) => ({ id: `r${i}`, externalProvider: 'HOTPEPPER', externalId: `${i}`, name: `店${i}`, latitude: 35.68, longitude: 139.76, genre: 'ラーメン', rating: 0, photoUrl: null });
 function poolContext(restaurants = []) {
   const ctx = {
-    console: quietConsole, Date, Map, Math,
+    console: quietConsole, Date, Map, Math, setTimeout,
+    // randishApi の isApiConnectivityError と同じ判定（kind が connection/timeout のみ再試行対象）。
+    isApiConnectivityError: (error) => error?.kind === 'connection' || error?.kind === 'timeout',
     restaurantSearchKey: 'current', restaurantSearchKeyRef: { current: 'current' },
     matchingRestaurantsRef: { current: restaurants }, candidateCacheRef: { current: null },
     candidatePoolRunRef: { current: 0 },
@@ -111,6 +113,16 @@ async function main() {
   filtered.excludedKeys.add('r3');
   assert.equal((await expression('loadCandidatePool', filtered)(query)).candidates.length, 1, 'apply distance and exclusions before drawing');
   await assert.rejects(expression('loadCandidatePool', poolContext())(query), /nearby unavailable/, 'a real connection failure must remain an error');
+
+  const retrying = poolContext();
+  let retryCalls = 0;
+  retrying.randishApi.getNearbyPlaces = async () => {
+    retryCalls++;
+    if (retryCalls === 1) throw Object.assign(new Error('timeout'), { kind: 'timeout' });
+    return { places: [retrying.restaurantToCandidatePlace(makeRestaurant(7))], source: 'HOTPEPPER' };
+  };
+  assert.equal((await expression('loadCandidatePool', retrying)(query)).candidates.length, 1, 'a transient timeout is retried once and recovers');
+  assert.equal(retryCalls, 2, 'the nearby search is attempted exactly twice');
 
   // Exercise the actual request implementation with a body that stalls after headers.
   const apiSource = fs.readFileSync(path.join(__dirname, '../src/services/randishApi.ts'), 'utf8');

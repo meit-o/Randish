@@ -974,7 +974,10 @@ export const styles = StyleSheet.create({
   contentInner: {
     paddingHorizontal: 18,
     paddingTop: 20,
-    paddingBottom: 190,
+    // フッターは通常フローに移したので、重なり回避の大きな余白は不要。
+    // ホームの現在地FAB（下から116pxの位置に56px）はスクロール領域に
+    // 重なるため、末尾のコンテンツがその下に入らないだけは確保する。
+    paddingBottom: 80,
   },
   hero: {
     padding: 22,
@@ -13363,10 +13366,12 @@ export const styles = StyleSheet.create({
     color: '#16130f',
   },
   footer: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    bottom: 20,
+    // 以前は absolute でスクロール領域に重ねていたため、抽選画面のように
+    // 初期表示で背の高い画面では PRESS START の下半分がフッターに隠れた。
+    // 通常フローに置けばスクロール領域は必ずフッターの上で終わる。
+    // 左右と下の余白は浮いた見た目を保つために残す。
+    marginHorizontal: 18,
+    marginBottom: 20,
     height: 82,
     flexDirection: 'row',
     alignItems: 'center',
