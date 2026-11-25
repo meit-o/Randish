@@ -56,3 +56,7 @@ tmp/
 .czrc
 .vercel/
 supabase/.temp/
+
+# ENISHI design tokens are shared; local review captures stay local.
+.impeccable/*
+!.impeccable/design.json

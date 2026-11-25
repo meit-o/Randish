@@ -1,0 +1,74 @@
+CREATE TABLE IF NOT EXISTS enishi_lock (id INTEGER PRIMARY KEY);
+INSERT INTO enishi_lock (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM enishi_lock WHERE id=1);
+CREATE TABLE IF NOT EXISTS enishi_users (
+ id VARCHAR(36) PRIMARY KEY, email VARCHAR(254) NOT NULL UNIQUE,
+ password_hash VARCHAR(255) NOT NULL, salt VARCHAR(255) NOT NULL,
+ nickname VARCHAR(40) NOT NULL, bio VARCHAR(500) NOT NULL DEFAULT '', avatar TEXT NOT NULL DEFAULT '',
+ is_admin BOOLEAN NOT NULL DEFAULT FALSE, deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE TABLE IF NOT EXISTS enishi_sessions (
+ token VARCHAR(64) PRIMARY KEY, user_id VARCHAR(36) NOT NULL REFERENCES enishi_users(id), expires_at BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS enishi_spots (
+ id VARCHAR(36) PRIMARY KEY, facility_key VARCHAR(120) NOT NULL UNIQUE, name VARCHAR(120) NOT NULL,
+ address VARCHAR(255) NOT NULL UNIQUE, lat DOUBLE PRECISION NOT NULL, lng DOUBLE PRECISION NOT NULL,
+ category VARCHAR(30) NOT NULL, description VARCHAR(1000) NOT NULL, cover VARCHAR(50) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS enishi_favorites (
+ user_id VARCHAR(36) NOT NULL REFERENCES enishi_users(id), spot_id VARCHAR(36) NOT NULL REFERENCES enishi_spots(id),
+ PRIMARY KEY(user_id,spot_id)
+);
+CREATE TABLE IF NOT EXISTS enishi_visits (
+ id VARCHAR(36) PRIMARY KEY, user_id VARCHAR(36) NOT NULL REFERENCES enishi_users(id),
+ spot_id VARCHAR(36) NOT NULL REFERENCES enishi_spots(id), started_at BIGINT NOT NULL, ended_at BIGINT, expires_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS enishi_visit_spot_idx ON enishi_visits(spot_id,started_at);
+CREATE TABLE IF NOT EXISTS enishi_active_visits (
+ user_id VARCHAR(36) PRIMARY KEY REFERENCES enishi_users(id), visit_id VARCHAR(36) NOT NULL UNIQUE REFERENCES enishi_visits(id)
+);
+CREATE TABLE IF NOT EXISTS enishi_encounters (
+ pair_a VARCHAR(36) NOT NULL, pair_b VARCHAR(36) NOT NULL, spot_id VARCHAR(36) NOT NULL REFERENCES enishi_spots(id),
+ encounter_day VARCHAR(10) NOT NULL, PRIMARY KEY(pair_a,pair_b,spot_id,encounter_day)
+);
+CREATE TABLE IF NOT EXISTS enishi_intents (
+ user_id VARCHAR(36) NOT NULL, other_id VARCHAR(36) NOT NULL,
+ selected BOOLEAN NOT NULL DEFAULT FALSE, hidden BOOLEAN NOT NULL DEFAULT FALSE, PRIMARY KEY(user_id,other_id)
+);
+CREATE TABLE IF NOT EXISTS enishi_matches (
+ id VARCHAR(36) PRIMARY KEY, pair_a VARCHAR(36) NOT NULL, pair_b VARCHAR(36) NOT NULL,
+ active BOOLEAN NOT NULL DEFAULT TRUE, created_at BIGINT NOT NULL, UNIQUE(pair_a,pair_b)
+);
+CREATE TABLE IF NOT EXISTS enishi_messages (
+ id VARCHAR(36) PRIMARY KEY, match_id VARCHAR(36) NOT NULL REFERENCES enishi_matches(id),
+ sender_id VARCHAR(36) NOT NULL, body VARCHAR(2000) NOT NULL, created_at BIGINT NOT NULL, generation BIGINT NOT NULL,
+ client_id VARCHAR(80) NOT NULL, UNIQUE(match_id,sender_id,client_id)
+);
+CREATE TABLE IF NOT EXISTS enishi_letters (
+ id VARCHAR(36) PRIMARY KEY, spot_id VARCHAR(36) NOT NULL REFERENCES enishi_spots(id), author_id VARCHAR(36) NOT NULL,
+ body VARCHAR(800) NOT NULL, anonymous BOOLEAN NOT NULL DEFAULT FALSE, created_at BIGINT NOT NULL,
+ expires_at BIGINT NOT NULL, deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE TABLE IF NOT EXISTS enishi_replies (
+ id VARCHAR(36) PRIMARY KEY, letter_id VARCHAR(36) NOT NULL REFERENCES enishi_letters(id), author_id VARCHAR(36) NOT NULL,
+ body VARCHAR(800) NOT NULL, created_at BIGINT NOT NULL, deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE TABLE IF NOT EXISTS enishi_reactions (
+ letter_id VARCHAR(36) NOT NULL REFERENCES enishi_letters(id), user_id VARCHAR(36) NOT NULL, PRIMARY KEY(letter_id,user_id)
+);
+CREATE TABLE IF NOT EXISTS enishi_notifications (
+ id VARCHAR(36) PRIMARY KEY, user_id VARCHAR(36) NOT NULL, kind VARCHAR(30) NOT NULL, title VARCHAR(120) NOT NULL,
+ body VARCHAR(500) NOT NULL, target_id VARCHAR(36) NOT NULL, event_key VARCHAR(200) NOT NULL,
+ created_at BIGINT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE, UNIQUE(user_id,event_key)
+);
+CREATE TABLE IF NOT EXISTS enishi_blocks (
+ user_id VARCHAR(36) NOT NULL, other_id VARCHAR(36) NOT NULL,
+ block_id VARCHAR(36) NOT NULL UNIQUE, anonymous BOOLEAN NOT NULL DEFAULT FALSE, PRIMARY KEY(user_id,other_id)
+);
+ALTER TABLE enishi_blocks ADD COLUMN IF NOT EXISTS block_id VARCHAR(36);
+ALTER TABLE enishi_blocks ADD COLUMN IF NOT EXISTS anonymous BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE UNIQUE INDEX IF NOT EXISTS enishi_block_id_idx ON enishi_blocks(block_id);
+CREATE TABLE IF NOT EXISTS enishi_reports (
+ id VARCHAR(36) PRIMARY KEY, reporter_id VARCHAR(36) NOT NULL, target_type VARCHAR(20) NOT NULL,
+ target_id VARCHAR(36) NOT NULL, reason VARCHAR(500) NOT NULL, snapshot TEXT NOT NULL,
+ created_at BIGINT NOT NULL, status VARCHAR(20) NOT NULL DEFAULT 'open'
+);

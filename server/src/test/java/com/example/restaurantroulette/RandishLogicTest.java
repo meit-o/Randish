@@ -73,6 +73,7 @@ import org.springframework.web.client.RestClient;
 class RandishLogicTest {
   private final JdbcClient jdbcClient = JdbcClient.create(new EmbeddedDatabaseBuilder()
       .setType(EmbeddedDatabaseType.H2)
+      .setName("randish-" + java.util.UUID.randomUUID() + ";MODE=PostgreSQL")
       .addScript("schema.sql")
       .build());
   private final RestaurantRepository restaurantRepository = new RestaurantRepository(jdbcClient);
