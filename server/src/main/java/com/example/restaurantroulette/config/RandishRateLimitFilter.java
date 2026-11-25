@@ -57,7 +57,7 @@ public class RandishRateLimitFilter extends OncePerRequestFilter {
   }
 
   private String bucketFor(String path) {
-    if (path.startsWith("/api/auth/")) {
+    if (path.startsWith("/api/auth/") || path.startsWith("/api/enishi/auth/")) {
       return "auth";
     }
     if (path.startsWith("/api/google-places/photos")) {

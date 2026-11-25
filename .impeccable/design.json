@@ -1,0 +1,541 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-22T14:11:15.634Z",
+  "title": "Design System: ENISHI Web",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "深緑",
+        "tonalRamp": [
+          "oklch(15% 0.0199 172.50)",
+          "oklch(26% 0.0369 172.50)",
+          "oklch(37% 0.0483 172.50)",
+          "oklch(49% 0.0568 172.50)",
+          "oklch(61% 0.0540 172.50)",
+          "oklch(73% 0.0455 172.50)",
+          "oklch(85% 0.0284 172.50)",
+          "oklch(95% 0.0114 172.50)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "深緑・hover",
+        "tonalRamp": [
+          "oklch(15% 0.0175 172.35)",
+          "oklch(26% 0.0324 172.35)",
+          "oklch(37% 0.0424 172.35)",
+          "oklch(49% 0.0499 172.35)",
+          "oklch(61% 0.0474 172.35)",
+          "oklch(73% 0.0399 172.35)",
+          "oklch(85% 0.0249 172.35)",
+          "oklch(95% 0.0100 172.35)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "緑墨",
+        "tonalRamp": [
+          "oklch(15% 0.0105 165.07)",
+          "oklch(26% 0.0196 165.07)",
+          "oklch(37% 0.0256 165.07)",
+          "oklch(49% 0.0301 165.07)",
+          "oklch(61% 0.0286 165.07)",
+          "oklch(73% 0.0241 165.07)",
+          "oklch(85% 0.0151 165.07)",
+          "oklch(95% 0.0060 165.07)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "補助の灰緑",
+        "tonalRamp": [
+          "oklch(15% 0.0076 157.41)",
+          "oklch(26% 0.0142 157.41)",
+          "oklch(37% 0.0185 157.41)",
+          "oklch(49% 0.0218 157.41)",
+          "oklch(61% 0.0207 157.41)",
+          "oklch(73% 0.0174 157.41)",
+          "oklch(85% 0.0109 157.41)",
+          "oklch(95% 0.0044 157.41)"
+        ]
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "薄緑のページ",
+        "tonalRamp": [
+          "oklch(15% 0.0012 145.55)",
+          "oklch(26% 0.0022 145.55)",
+          "oklch(37% 0.0029 145.55)",
+          "oklch(49% 0.0034 145.55)",
+          "oklch(61% 0.0032 145.55)",
+          "oklch(73% 0.0027 145.55)",
+          "oklch(85% 0.0017 145.55)",
+          "oklch(95% 0.0007 145.55)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "白い作業面",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(26% 0.0000 0.00)",
+          "oklch(37% 0.0000 0.00)",
+          "oklch(49% 0.0000 0.00)",
+          "oklch(61% 0.0000 0.00)",
+          "oklch(73% 0.0000 0.00)",
+          "oklch(85% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "pale": {
+        "role": "neutral",
+        "displayName": "淡緑の補助面",
+        "tonalRamp": [
+          "oklch(15% 0.0032 150.69)",
+          "oklch(26% 0.0060 150.69)",
+          "oklch(37% 0.0078 150.69)",
+          "oklch(49% 0.0092 150.69)",
+          "oklch(61% 0.0087 150.69)",
+          "oklch(73% 0.0073 150.69)",
+          "oklch(85% 0.0046 150.69)",
+          "oklch(95% 0.0018 150.69)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "薄い境界",
+        "tonalRamp": [
+          "oklch(15% 0.0036 145.49)",
+          "oklch(26% 0.0067 145.49)",
+          "oklch(37% 0.0087 145.49)",
+          "oklch(49% 0.0103 145.49)",
+          "oklch(61% 0.0097 145.49)",
+          "oklch(73% 0.0082 145.49)",
+          "oklch(85% 0.0051 145.49)",
+          "oklch(95% 0.0021 145.49)"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "危険操作の赤",
+        "tonalRamp": [
+          "oklch(15% 0.0499 27.52)",
+          "oklch(26% 0.0927 27.52)",
+          "oklch(37% 0.1212 27.52)",
+          "oklch(49% 0.1426 27.52)",
+          "oklch(61% 0.1354 27.52)",
+          "oklch(73% 0.1140 27.52)",
+          "oklch(85% 0.0713 27.52)",
+          "oklch(95% 0.0285 27.52)"
+        ]
+      },
+      "danger-hover": {
+        "role": "secondary",
+        "displayName": "危険操作の赤・hover",
+        "tonalRamp": [
+          "oklch(15% 0.0427 27.35)",
+          "oklch(26% 0.0794 27.35)",
+          "oklch(37% 0.1038 27.35)",
+          "oklch(49% 0.1221 27.35)",
+          "oklch(61% 0.1160 27.35)",
+          "oklch(73% 0.0977 27.35)",
+          "oklch(85% 0.0611 27.35)",
+          "oklch(95% 0.0244 27.35)"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "フォーカスの緑",
+        "tonalRamp": [
+          "oklch(15% 0.0202 158.48)",
+          "oklch(26% 0.0376 158.48)",
+          "oklch(37% 0.0491 158.48)",
+          "oklch(49% 0.0578 158.48)",
+          "oklch(61% 0.0549 158.48)",
+          "oklch(73% 0.0463 158.48)",
+          "oklch(85% 0.0289 158.48)",
+          "oklch(95% 0.0116 158.48)"
+        ]
+      },
+      "button-light": {
+        "role": "neutral",
+        "displayName": "淡色ボタン",
+        "tonalRamp": [
+          "oklch(15% 0.0024 124.45)",
+          "oklch(26% 0.0045 124.45)",
+          "oklch(37% 0.0059 124.45)",
+          "oklch(49% 0.0069 124.45)",
+          "oklch(61% 0.0066 124.45)",
+          "oklch(73% 0.0055 124.45)",
+          "oklch(85% 0.0035 124.45)",
+          "oklch(95% 0.0014 124.45)"
+        ]
+      },
+      "button-light-hover": {
+        "role": "neutral",
+        "displayName": "淡色ボタン・hover",
+        "tonalRamp": [
+          "oklch(15% 0.0070 143.03)",
+          "oklch(26% 0.0129 143.03)",
+          "oklch(37% 0.0169 143.03)",
+          "oklch(49% 0.0199 143.03)",
+          "oklch(61% 0.0189 143.03)",
+          "oklch(73% 0.0159 143.03)",
+          "oklch(85% 0.0099 143.03)",
+          "oklch(95% 0.0040 143.03)"
+        ]
+      },
+      "outline-line": {
+        "role": "neutral",
+        "displayName": "補助ボタンの境界",
+        "tonalRamp": [
+          "oklch(15% 0.0081 147.42)",
+          "oklch(26% 0.0151 147.42)",
+          "oklch(37% 0.0197 147.42)",
+          "oklch(49% 0.0232 147.42)",
+          "oklch(61% 0.0221 147.42)",
+          "oklch(73% 0.0186 147.42)",
+          "oklch(85% 0.0116 147.42)",
+          "oklch(95% 0.0046 147.42)"
+        ]
+      },
+      "outline-hover": {
+        "role": "neutral",
+        "displayName": "補助ボタン・hover",
+        "tonalRamp": [
+          "oklch(15% 0.0039 141.26)",
+          "oklch(26% 0.0073 141.26)",
+          "oklch(37% 0.0095 141.26)",
+          "oklch(49% 0.0112 141.26)",
+          "oklch(61% 0.0107 141.26)",
+          "oklch(73% 0.0090 141.26)",
+          "oklch(85% 0.0056 141.26)",
+          "oklch(95% 0.0022 141.26)"
+        ]
+      },
+      "nav-text": {
+        "role": "neutral",
+        "displayName": "ナビゲーションの文字",
+        "tonalRamp": [
+          "oklch(15% 0.0081 154.44)",
+          "oklch(26% 0.0150 154.44)",
+          "oklch(37% 0.0196 154.44)",
+          "oklch(49% 0.0230 154.44)",
+          "oklch(61% 0.0219 154.44)",
+          "oklch(73% 0.0184 154.44)",
+          "oklch(85% 0.0115 154.44)",
+          "oklch(95% 0.0046 154.44)"
+        ]
+      },
+      "nav-hover": {
+        "role": "neutral",
+        "displayName": "ナビゲーション・hover",
+        "tonalRamp": [
+          "oklch(15% 0.0022 137.77)",
+          "oklch(26% 0.0040 137.77)",
+          "oklch(37% 0.0052 137.77)",
+          "oklch(49% 0.0061 137.77)",
+          "oklch(61% 0.0058 137.77)",
+          "oklch(73% 0.0049 137.77)",
+          "oklch(85% 0.0031 137.77)",
+          "oklch(95% 0.0012 137.77)"
+        ]
+      },
+      "nav-active": {
+        "role": "neutral",
+        "displayName": "ナビゲーション・選択面",
+        "tonalRamp": [
+          "oklch(15% 0.0045 141.81)",
+          "oklch(26% 0.0084 141.81)",
+          "oklch(37% 0.0110 141.81)",
+          "oklch(49% 0.0129 141.81)",
+          "oklch(61% 0.0123 141.81)",
+          "oklch(73% 0.0104 141.81)",
+          "oklch(85% 0.0065 141.81)",
+          "oklch(95% 0.0026 141.81)"
+        ]
+      },
+      "chip-selected": {
+        "role": "neutral",
+        "displayName": "チップ・選択面",
+        "tonalRamp": [
+          "oklch(15% 0.0079 134.95)",
+          "oklch(26% 0.0147 134.95)",
+          "oklch(37% 0.0192 134.95)",
+          "oklch(49% 0.0226 134.95)",
+          "oklch(61% 0.0215 134.95)",
+          "oklch(73% 0.0181 134.95)",
+          "oklch(85% 0.0113 134.95)",
+          "oklch(95% 0.0045 134.95)"
+        ]
+      },
+      "chip-selected-line": {
+        "role": "neutral",
+        "displayName": "チップ・選択境界",
+        "tonalRamp": [
+          "oklch(15% 0.0164 141.15)",
+          "oklch(26% 0.0305 141.15)",
+          "oklch(37% 0.0399 141.15)",
+          "oklch(49% 0.0469 141.15)",
+          "oklch(61% 0.0446 141.15)",
+          "oklch(73% 0.0375 141.15)",
+          "oklch(85% 0.0235 141.15)",
+          "oklch(95% 0.0094 141.15)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "手紙の生成り",
+        "tonalRamp": [
+          "oklch(15% 0.0019 95.10)",
+          "oklch(26% 0.0035 95.10)",
+          "oklch(37% 0.0046 95.10)",
+          "oklch(49% 0.0054 95.10)",
+          "oklch(61% 0.0051 95.10)",
+          "oklch(73% 0.0043 95.10)",
+          "oklch(85% 0.0027 95.10)",
+          "oklch(95% 0.0011 95.10)"
+        ]
+      },
+      "paper-line": {
+        "role": "neutral",
+        "displayName": "紙色の境界",
+        "tonalRamp": [
+          "oklch(15% 0.0070 109.88)",
+          "oklch(26% 0.0130 109.88)",
+          "oklch(37% 0.0170 109.88)",
+          "oklch(49% 0.0200 109.88)",
+          "oklch(61% 0.0190 109.88)",
+          "oklch(73% 0.0160 109.88)",
+          "oklch(85% 0.0100 109.88)",
+          "oklch(95% 0.0040 109.88)"
+        ]
+      },
+      "scroll-thumb": {
+        "role": "neutral",
+        "displayName": "スクロールの灰緑",
+        "tonalRamp": [
+          "oklch(15% 0.0156 149.33)",
+          "oklch(26% 0.0290 149.33)",
+          "oklch(37% 0.0380 149.33)",
+          "oklch(49% 0.0447 149.33)",
+          "oklch(61% 0.0425 149.33)",
+          "oklch(73% 0.0358 149.33)",
+          "oklch(85% 0.0223 149.33)",
+          "oklch(95% 0.0089 149.33)"
+        ]
+      },
+      "scroll-thumb-hover": {
+        "role": "neutral",
+        "displayName": "スクロールの灰緑・hover",
+        "tonalRamp": [
+          "oklch(15% 0.0166 152.06)",
+          "oklch(26% 0.0308 152.06)",
+          "oklch(37% 0.0403 152.06)",
+          "oklch(49% 0.0474 152.06)",
+          "oklch(61% 0.0450 152.06)",
+          "oklch(73% 0.0379 152.06)",
+          "oklch(85% 0.0237 152.06)",
+          "oklch(95% 0.0095 152.06)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "ページ見出し",
+        "purpose": "標準の日本語ページ見出し。小画面では別サイズ。"
+      },
+      "title": {
+        "displayName": "節見出し",
+        "purpose": "パネル・内容の見出し。"
+      },
+      "body": {
+        "displayName": "本文",
+        "purpose": "ルートサイズと標準段落の行間。"
+      },
+      "label": {
+        "displayName": "フォームラベル",
+        "purpose": "入力の意味を短く示す。"
+      },
+      "button": {
+        "displayName": "主操作",
+        "purpose": "標準ボタンの文字。"
+      },
+      "quiet": {
+        "displayName": "補足",
+        "purpose": "説明・補助情報。"
+      },
+      "wordmark": {
+        "displayName": "ENISHIワードマーク",
+        "purpose": "英字ロゴ用。日本語の本文・ページ見出しには適用しない。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-menu",
+        "value": "0 5px 20px #223f2824",
+        "purpose": "チャットの安全操作メニュー。"
+      },
+      {
+        "name": "toast",
+        "value": "0 8px 30px #23443125",
+        "purpose": "一時的な通知。"
+      },
+      {
+        "name": "dialog",
+        "value": "0 15px 60px #152e3033",
+        "purpose": "確認ダイアログ。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "background 0.18s, color 0.18s, border-color 0.18s",
+        "purpose": "操作の状態フィードバック。"
+      },
+      {
+        "name": "photo-transition",
+        "value": "filter 0.2s",
+        "purpose": "施設写真のhover明度変化。"
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition: none !important; scroll-behavior: auto !important",
+        "purpose": "prefers-reduced-motion: reduceに従う。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-min",
+        "value": "1500px"
+      },
+      {
+        "name": "compact-max",
+        "value": "1200px"
+      },
+      {
+        "name": "stacked-max",
+        "value": "1000px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "主ボタン",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "保存するに使う実装済みボタン。",
+      "html": "<button class=\"ds-control ds-button\">保存する</button>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 44px;\n  border: 1px solid transparent;\n  border-radius: 7px;\n  padding: 11px 20px;\n  background: var(--green, #1b4b3e);\n  color: #fff;\n  font-size: 0.85rem;\n  font-weight: 500;\n  line-height: 1.5;\n}\n.ds-button:hover {\n  background: var(--green-dark, #123b30);\n}"
+    },
+    {
+      "name": "淡色ボタン",
+      "kind": "button",
+      "refersTo": "button-light",
+      "description": "スポットを探すに使う実装済みボタン。",
+      "html": "<button class=\"ds-control ds-button ds-light\">スポットを探す</button>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 44px;\n  border: 1px solid transparent;\n  border-radius: 7px;\n  padding: 11px 20px;\n  background: var(--green, #1b4b3e);\n  color: #fff;\n  font-size: 0.85rem;\n  font-weight: 500;\n  line-height: 1.5;\n}\n.ds-button:hover {\n  background: var(--green-dark, #123b30);\n}\n.ds-button.ds-light {\n  background: #f8faf5;\n  color: var(--green, #1b4b3e);\n  min-height: 41px;\n  font-size: 0.8rem;\n  padding: 9px 17px;\n}\n.ds-button.ds-light:hover {\n  background: #dde8dc;\n}"
+    },
+    {
+      "name": "アウトラインボタン",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "キャンセルに使う実装済みボタン。",
+      "html": "<button class=\"ds-control ds-button ds-outline\">キャンセル</button>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 44px;\n  border: 1px solid transparent;\n  border-radius: 7px;\n  padding: 11px 20px;\n  background: var(--green, #1b4b3e);\n  color: #fff;\n  font-size: 0.85rem;\n  font-weight: 500;\n  line-height: 1.5;\n}\n.ds-button:hover {\n  background: var(--green-dark, #123b30);\n}\n.ds-button.ds-outline {\n  background: transparent;\n  color: var(--green, #1b4b3e);\n  border-color: #cbd9cc;\n}\n.ds-button.ds-outline:hover {\n  background: #edf3ec;\n}"
+    },
+    {
+      "name": "危険操作ボタン",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "削除するに使う実装済みボタン。",
+      "html": "<button class=\"ds-control ds-button ds-danger\">削除する</button>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 44px;\n  border: 1px solid transparent;\n  border-radius: 7px;\n  padding: 11px 20px;\n  background: var(--green, #1b4b3e);\n  color: #fff;\n  font-size: 0.85rem;\n  font-weight: 500;\n  line-height: 1.5;\n}\n.ds-button:hover {\n  background: var(--green-dark, #123b30);\n}\n.ds-button.ds-danger {\n  background: var(--danger, #a83d35);\n}\n.ds-button.ds-danger:hover {\n  background: #852d27;\n}"
+    },
+    {
+      "name": "テキスト操作",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "本文・一覧に添える静かな操作。",
+      "html": "<button class=\"ds-control ds-text-button\">すべて見る</button>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-text-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  background: none;\n  border: 0;\n  padding: 5px 0;\n  color: var(--green, #1b4b3e);\n  font-size: 0.79rem;\n  line-height: 1.6;\n}\n.ds-text-button:hover {\n  color: #45653b;\n}"
+    },
+    {
+      "name": "入力欄",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "日本語ラベルと白い入力面。",
+      "html": "<label class=\"ds-label\">ニックネーム<input class=\"ds-control ds-input\" placeholder=\"ニックネームを入力\"></label>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-label {\n  display: flex;\n  flex-direction: column;\n  gap: 9px;\n  font-size: 0.85rem;\n  font-weight: 500;\n  margin-bottom: 22px;\n}.ds-label{font-family:\"Noto Sans JP\", sans-serif;color:#293d34}.ds-input{\n  font: inherit;\n}.ds-input::placeholder{color:var(--muted,#647269)}.ds-input{caret-color:var(--green,#1b4b3e)}"
+    },
+    {
+      "name": "サイドナビ",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "淡緑の選択面と深緑の文字。",
+      "html": "<nav aria-label=\"メイン\"><button class=\"ds-control ds-nav-link ds-active\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z\"/></svg>ホーム</button><button class=\"ds-control ds-nav-link\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/></svg>スポット</button></nav>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-nav-link {\n  border: 0;\n  background: none;\n  text-align: left;\n  padding: 14px 17px;\n  border-radius: 9px;\n  display: flex;\n  gap: 14px;\n  align-items: center;\n  font-size: 0.9rem;\n  color: #5e6c62;\n  width: 100%;\n}\n.ds-nav-link:hover {\n  background: #f4f7f3;\n}\n.ds-nav-link.ds-active {\n  background: #eaf1e9;\n  color: var(--green, #1b4b3e);\n  font-weight: 600;\n}"
+    },
+    {
+      "name": "フィルターチップ",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "白い通常状態と淡緑の選択状態。",
+      "html": "<div class=\"ds-chip-examples\"><button class=\"ds-control ds-chip\" aria-pressed=\"false\">お気に入り</button><button class=\"ds-control ds-chip ds-selected\" aria-pressed=\"true\">お気に入り</button></div>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-chip {\n  background: #fff;\n  border: 1px solid var(--line, #e2e8e2);\n  border-radius: 7px;\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  padding: 9px 14px;\n  font-size: 0.8rem;\n}\n.ds-chip.ds-selected {\n  background: #e4eedf;\n  border-color: #aac2a6;\n}.ds-chip-examples{display:flex;flex-wrap:wrap;gap:12px;color:#293d34}"
+    },
+    {
+      "name": "白い設定パネル",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "線と白い面で区切る通常カード。",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">プライバシーについて</h2><p class=\"ds-panel-body\">現在地、チェックイン状態、具体的な滞在日時は、他のユーザーに公開されません。</p></section>",
+      "css": ".ds-panel {\n  background: white;\n  border: 1px solid var(--line, #e2e8e2);\n  border-radius: 14px;\n  padding: 30px;\n}.ds-panel{font-family:\"Noto Sans JP\", sans-serif;color:#293d34}.ds-panel-title{font-size:1.13rem;font-weight:600;line-height:1.7;margin:0 0 12px}.ds-panel-body{font-size:.87rem;line-height:1.9;color:var(--muted,#647269);margin-top:0}"
+    },
+    {
+      "name": "滞在パネルと3本輪郭",
+      "kind": "custom",
+      "refersTo": "stay-panel",
+      "description": "深緑の面に淡色の操作と重なる3本の楕円。",
+      "html": "<section class=\"ds-stay-panel\"><div><span class=\"ds-stay-status\"><span class=\"ds-status-dot\"></span>まだチェックインしていません</span><h2>今日は、どこで過ごしますか？</h2><p>お気に入りの場所で、いつものひとときを。</p><button class=\"ds-control ds-button ds-light\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/></svg>スポットを探す</button></div><div class=\"ds-stay-motif\" aria-hidden=\"true\"><span></span><span></span><span></span><svg width=\"38\" height=\"38\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 3C5 2 2 10 5 16c6 7 17 0 15-13Z\"/><path d=\"M3 22 15 10\"/></svg></div></section>",
+      "css": ".ds-control{font-family:\"Noto Sans JP\", sans-serif;cursor:pointer;transition:background .18s,color .18s,border-color .18s}.ds-control:disabled{cursor:not-allowed;opacity:.5}.ds-control:focus-visible{outline:3px solid #8ab49b;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-control{transition:none!important;scroll-behavior:auto!important}}.ds-stay-panel {\n  background: var(--green, #1b4b3e);\n  color: white;\n  border-radius: var(--radius, 14px);\n  padding: 28px 30px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n  min-height: 227px;\n  align-items: center;\n}\n.ds-stay-panel > div:first-child {\n  position: relative;\n  z-index: 1;\n}\n.ds-stay-status {\n  font-size: 0.75rem;\n  color: #d3e1d7;\n  display: flex;\n  gap: 7px;\n  align-items: center;\n  margin-bottom: 13px;\n}\n.ds-status-dot {\n  width: 6px;\n  height: 6px;\n  border-radius: 50%;\n  background: #cedbc7;\n}\n.ds-stay-panel h2 {\n  font-size: 1.3rem;\n  line-height: 1.7;\n  margin-bottom: 5px;\n  font-weight: 500;\n  letter-spacing: 0.025em;\n}\n.ds-stay-panel p {\n  color: #d7e4da;\n  font-size: 0.8rem;\n  margin-bottom: 20px;\n}\n.ds-stay-motif {\n  position: absolute;\n  right: 14px;\n  top: 39px;\n  width: 150px;\n  height: 150px;\n  color: #c3d6bd;\n  opacity: 0.45;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n.ds-stay-motif span {\n  width: 90px;\n  height: 130px;\n  border: 1px solid #d4e4ca;\n  border-radius: 50%;\n  position: absolute;\n  transform: rotate(35deg);\n}\n.ds-stay-motif span:nth-child(2) {\n  transform: rotate(-35deg);\n}\n.ds-stay-motif svg {\n  width: 32px;\n}\n.ds-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  min-height: 44px;\n  border: 1px solid transparent;\n  border-radius: 7px;\n  padding: 11px 20px;\n  background: var(--green, #1b4b3e);\n  color: #fff;\n  font-size: 0.85rem;\n  font-weight: 500;\n  line-height: 1.5;\n}\n.ds-button:hover {\n  background: var(--green-dark, #123b30);\n}\n.ds-button.ds-light {\n  background: #f8faf5;\n  color: var(--green, #1b4b3e);\n  min-height: 41px;\n  font-size: 0.8rem;\n  padding: 9px 17px;\n}\n.ds-button.ds-light:hover {\n  background: #dde8dc;\n}.ds-stay-panel{font-family:\"Noto Sans JP\", sans-serif}.ds-stay-panel h2{margin-top:0}.ds-stay-panel p{margin-top:0;line-height:1.9}.ds-stay-motif span:nth-child(3){transform:rotate(0deg)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "日本の図書館の閲覧室",
+    "overview": "深緑と白の落ち着いた雰囲気を、広い余白、読みやすい日本語、静かな線で表す。白い作業面に深緑の操作を置き、淡い緑で補足と選択状態を支える。Noto Sans JPの本文・操作と、GeorgiaのENISHIワードマークを組み合わせる。\n\n対象は追加した**ENISHIのWeb／専用APIを使う画面**。既存RandishモバイルUIには適用しない。記録の根拠は `web/src/main.jsx` と `web/src/style.css` の完成実装、確認済みブランド方針は `PRODUCT.md` と `docs/ENISHI.surface.md`。限定的な仕上げレビューを、全画面・全状態の監査済みという意味には広げない。",
+    "keyCharacteristics": [
+      "深緑の主操作、白い作業面、淡緑の補助面。",
+      "日本語サンセリフと、ロゴに限ったセリフの組み合わせ。",
+      "3本の重なる輪郭と、控えめな状態変化。",
+      "通常の面は線と色で区切り、影は一時的な浮遊UIに使う。"
+    ],
+    "rules": [
+      {
+        "name": "The Quiet Surface Rule",
+        "body": "通常のコンテンツ面は線と色で区切り、浮遊UIの影を一般カードへ広げない。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Three Outlines Rule",
+        "body": "ENISHIマークと滞在モチーフは、中央を共有する3本の楕円輪郭を重ねる。傾きは−35度・0度・35度。塗りつぶした人や位置の表示に読み替えない。認証面では3つの円を横に重ねた関連表現がある。",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** 深緑の操作、白い作業面、淡緑の補助面の役割を維持する。",
+      "**Do** 3本の重なる輪郭、線画SVG、ENISHIワードマークの関係を保つ。",
+      "**Do** 日本語の操作を具体的に書き、フォーカス表示と小画面のナビ余白を引き継ぐ。"
+    ],
+    "donts": [
+      "**Don't** 通常カードを、浮遊メニューやダイアログと同じ影で持ち上げる。",
+      "**Don't** ロゴ用のGeorgiaを日本語本文・ページ見出しへ広げる。",
+      "**Don't** このENISHI専用の記録を、既存Randishモバイル画面のデザイン規則として適用する。"
+    ]
+  }
+}

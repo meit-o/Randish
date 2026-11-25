@@ -43,3 +43,13 @@ Expo Goを実機で使う場合は、アプリからアクセスするAPIのURL�
 
 - [データベース設計](server/docs/database-design.md)
 - [負荷テスト](loadtest/README.md)
+
+## ENISHI Webアプリ
+
+同じ場所でのすれ違いと双方の同意から交流を始めるENISHI MVPを、独立した起動入口として追加しています。
+
+```powershell
+node scripts/enishi.mjs --demo
+```
+
+起動後は `http://127.0.0.1:8085/`。サンプルユーザー、仮仕様、検証結果、設定は [ENISHIの起動・実装資料](docs/ENISHI.md) を参照してください。
